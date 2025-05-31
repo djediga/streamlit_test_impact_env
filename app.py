@@ -5,12 +5,21 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import numpy as np
+import os
 
 # --- Chargement des données ---
 @st.cache_data
+#def load_data():
+    #df = pd.read_csv('../data/AGB_CIQUAL_food_products.csv')  # Fichier fusionné contenant nutrition + environnement
+    #return df
+
+
+
 def load_data():
-    df = pd.read_csv("../notebooks/data/AGB_CIQUAL_food_products.csv")  # Fichier fusionné contenant nutrition + environnement
+    path = os.path.join(os.path.dirname(__file__), 'data', 'AGB_CIQUAL_food_products.csv')
+    df = pd.read_csv(path)
     return df
+
 
 df = load_data()
 
