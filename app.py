@@ -8,11 +8,10 @@ import numpy as np
 import os
 
 # --- Chargement des données ---
-@st.cache_data
+#@st.cache_data
 #def load_data():
     #df = pd.read_csv('../data/AGB_CIQUAL_food_products.csv')  # Fichier fusionné contenant nutrition + environnement
     #return df
-
 
 
 def load_data():
@@ -22,6 +21,7 @@ def load_data():
 
 
 df = load_data()
+
 
 # --- Titre ---
 st.title("🍽️ Sélectionnez vos aliments et découvrez leur empreinte environnementale")
