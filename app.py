@@ -13,33 +13,32 @@ import os
     #df = pd.read_csv('../data/AGB_CIQUAL_food_products.csv')  # Fichier fusionné contenant nutrition + environnement
     #return df
 
-
+# --- Chargement des données ---
 def load_data():
-    path = os.path.join(os.path.dirname(__file__), 'data', 'AGB_CIQUAL_food_products.csv')
-    df = pd.read_csv(path)
+    df = pd.read_csv("data/AGB_CIQUAL_food_products.csv")  # Fusion nutrition + environnement
     return df
 
-
 df = load_data()
-
 
 # --- Titre ---
 st.title("🍽️ Sélectionnez vos aliments et découvrez leur empreinte environnementale")
 
 # --- Interface de sélection ---
-aliments = df["Nom du Produit en Français"].unique()
+aliments = df["Nom du Produit en Français"].dropna().unique()
 selection = st.multiselect("Choisissez vos aliments :", aliments)
 
 # --- Affichage des résultats ---
 if selection:
     df_selection = df[df["Nom du Produit en Français"].isin(selection)]
 
+    # --- Nutrition ---
     st.subheader("Apport nutritionnel pour 100 g (par aliment)")
     st.dataframe(df_selection[[
         "Nom du Produit en Français", "Energie (kcal/100 g)", "Protéines (g/100 g)",
         "Glucides (g/100 g)", "Lipides (g/100 g)", "Fibres alimentaires (g/100 g)"
     ]].set_index("Nom du Produit en Français"))
 
+    # --- Environnement ---
     st.subheader("Impact environnemental (par kg de produit)")
     st.dataframe(df_selection[[
         "Nom du Produit en Français", "Score unique EF", "Changement climatique - émissions fossiles",
@@ -64,7 +63,7 @@ if selection:
     st.write("**Total impact environnemental (par kg)**")
     st.json(total_impact.to_dict())
 
-    # --- Visualisation bar charts ---
+    # --- Visualisations ---
     st.subheader("Visualisation : Apports nutritionnels par aliment")
     fig_nutri = px.bar(df_selection, x="Nom du Produit en Français", y=[
         "Energie (kcal/100 g)", "Protéines (g/100 g)", "Glucides (g/100 g)",
@@ -79,10 +78,9 @@ if selection:
     ], barmode="group")
     st.plotly_chart(fig_impact)
 
-    # --- Score global par aliment ---
-st.subheader("Score combiné nutrition + environnement (note simplifiée)")
+    # --- Score global + évaluation ---
+    st.subheader("Score combiné nutrition + environnement (note simplifiée)")
 
-if not df_selection.empty:
     df_selection["Score nutrition"] = df_selection[[
         "Protéines (g/100 g)", "Fibres alimentaires (g/100 g)"
     ]].sum(axis=1) - df_selection[[
@@ -92,7 +90,7 @@ if not df_selection.empty:
     df_selection["Score environnement"] = -df_selection["Score unique EF"]
     df_selection["Note globale"] = df_selection["Score nutrition"] + df_selection["Score environnement"]
 
-    # --- Ajout de la colonne de classement ---
+    # Qualification du score
     def qualifier_score(score):
         if score > 5:
             return "Bon"
@@ -105,10 +103,11 @@ if not df_selection.empty:
 
     df_selection["Classement"] = df_selection["Note globale"].apply(qualifier_score)
 
-    # --- Affichage ---
     st.dataframe(
-        df_selection[["Nom du Produit en Français", "Note globale", "Classement"]]
-        .sort_values(by="Note globale", ascending=False)
+        df_selection[[
+            "Nom du Produit en Français", "Note globale", "Classement"
+        ]].sort_values(by="Note globale", ascending=False)
     )
+
 else:
     st.info("Veuillez choisir au moins un aliment pour afficher les résultats.")
