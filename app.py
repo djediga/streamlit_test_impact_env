@@ -80,7 +80,9 @@ if selection:
     st.plotly_chart(fig_impact)
 
     # --- Score global par aliment ---
-    st.subheader("Score combiné nutrition + environnement (note simplifiée)")
+st.subheader("Score combiné nutrition + environnement (note simplifiée)")
+
+if not df_selection.empty:
     df_selection["Score nutrition"] = df_selection[[
         "Protéines (g/100 g)", "Fibres alimentaires (g/100 g)"
     ]].sum(axis=1) - df_selection[[
@@ -90,7 +92,23 @@ if selection:
     df_selection["Score environnement"] = -df_selection["Score unique EF"]
     df_selection["Note globale"] = df_selection["Score nutrition"] + df_selection["Score environnement"]
 
-    st.dataframe(df_selection[["Nom du Produit en Français", "Note globale"]].sort_values(by="Note globale", ascending=False))
+    # --- Ajout de la colonne de classement ---
+    def qualifier_score(score):
+        if score > 5:
+            return "Bon"
+        elif score > 0:
+            return "Moyen"
+        elif score > -20:
+            return "Mauvais"
+        else:
+            return "Critique"
 
+    df_selection["Classement"] = df_selection["Note globale"].apply(qualifier_score)
+
+    # --- Affichage ---
+    st.dataframe(
+        df_selection[["Nom du Produit en Français", "Note globale", "Classement"]]
+        .sort_values(by="Note globale", ascending=False)
+    )
 else:
     st.info("Veuillez choisir au moins un aliment pour afficher les résultats.")
